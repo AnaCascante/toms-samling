@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout, isLoggedIn } from "@/lib/auth";
@@ -18,12 +18,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
 
-  // Check auth on mount
-  useState(() => {
+  useEffect(() => {
     setAuthed(isLoggedIn());
-  });
+  }, []);
 
-  // Don't wrap Studio in auth/shell
   if (pathname.startsWith("/studio")) {
     return <>{children}</>;
   }
@@ -33,7 +31,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     setAuthed(false);
   };
 
-  // Loading state
   if (authed === null) {
     return (
       <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
@@ -44,7 +41,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Not logged in
   if (!authed) {
     return <LoginScreen onLogin={() => setAuthed(true)} />;
   }
