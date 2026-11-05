@@ -1,0 +1,133 @@
+import { defineType, defineField } from "sanity";
+
+export const movie = defineType({
+  name: "movie",
+  title: "Film",
+  type: "document",
+  fields: [
+    defineField({
+      name: "title",
+      title: "Tittel",
+      type: "string",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "studio",
+      title: "Filmselskap",
+      type: "string",
+      options: {
+        list: [
+          "Disney",
+          "Pixar",
+          "Marvel",
+          "DreamWorks",
+          "Warner Bros.",
+          "Universal",
+          "Sony Pictures",
+          "20th Century Studios",
+          "Paramount",
+          "Lionsgate",
+          "Columbia Pictures",
+          "New Line Cinema",
+          "MGM",
+          "A24",
+          "Studio Ghibli",
+          "Lucasfilm",
+          "DC Studios",
+          "Netflix",
+          "Amazon Studios",
+          "HBO",
+          "Nordisk Film",
+          "Annet",
+        ],
+      },
+    }),
+    defineField({
+      name: "year",
+      title: "År",
+      type: "string",
+    }),
+    defineField({
+      name: "genre",
+      title: "Sjanger",
+      type: "string",
+      options: {
+        list: [
+          "Action",
+          "Komedie",
+          "Drama",
+          "Thriller",
+          "Skrekk",
+          "Sci-Fi",
+          "Fantasy",
+          "Romantikk",
+          "Dokumentar",
+          "Animasjon",
+          "Krim",
+          "Eventyr",
+          "Musikal",
+          "Western",
+          "Krigsfilm",
+          "Annet",
+        ],
+      },
+    }),
+    defineField({
+      name: "format",
+      title: "Format",
+      type: "string",
+      options: {
+        list: ["DVD", "Blu-ray", "4K UHD", "VHS", "LaserDisc", "Annet"],
+      },
+    }),
+    defineField({
+      name: "mainActors",
+      title: "Hovedskuespillere",
+      type: "string",
+    }),
+    defineField({
+      name: "condition",
+      title: "Tilstand",
+      type: "string",
+      options: {
+        list: ["Mint", "Nær Mint", "Veldig God", "God", "Brukbar", "Dårlig"],
+      },
+    }),
+    defineField({
+      name: "language",
+      title: "Språk",
+      type: "string",
+    }),
+    defineField({
+      name: "duration",
+      title: "Varighet (min)",
+      type: "string",
+    }),
+    defineField({
+      name: "rating",
+      title: "Vurdering",
+      type: "string",
+    }),
+    defineField({
+      name: "price",
+      title: "Pris (kr)",
+      type: "string",
+    }),
+    defineField({
+      name: "notes",
+      title: "Notater",
+      type: "text",
+    }),
+    defineField({
+      name: "coverUrl",
+      title: "Cover URL",
+      type: "url",
+    }),
+    defineField({
+      name: "coverImage",
+      title: "Cover Bilde",
+      type: "image",
+      options: { hotspot: true },
+    }),
+  ],
+});
