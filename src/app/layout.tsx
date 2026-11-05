@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import AppShell from "@/components/app-shell";
 
@@ -29,7 +30,17 @@ export default function RootLayout({
       <body
         className={`${inter.className} bg-[#0d0d0d] text-[#f0ece4] min-h-screen flex flex-col`}
       >
-        <AppShell>{children}</AppShell>
+        <Suspense
+          fallback={
+            <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-[#d4a04a] flex items-center justify-center text-[#0d0d0d] font-bold text-lg animate-pulse">
+                T
+              </div>
+            </div>
+          }
+        >
+          <AppShell>{children}</AppShell>
+        </Suspense>
       </body>
     </html>
   );
