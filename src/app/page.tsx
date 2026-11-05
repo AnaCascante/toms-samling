@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 
-export const instant = false;
-
 async function getCounts() {
-  const [vinylCount, movieCount] = await Promise.all([
-    client.fetch<number>(`count(*[_type == "vinyl"])`),
-    client.fetch<number>(`count(*[_type == "movie"])`),
-  ]);
-  return { vinylCount, movieCount };
+  try {
+    const [vinylCount, movieCount] = await Promise.all([
+      client.fetch<number>(`count(*[_type == "vinyl"])`),
+      client.fetch<number>(`count(*[_type == "movie"])`),
+    ]);
+    return { vinylCount, movieCount };
+  } catch {
+    return { vinylCount: 0, movieCount: 0 };
+  }
 }
 
 export default async function HomePage() {
