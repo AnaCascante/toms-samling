@@ -9,6 +9,19 @@ const client = createClient({
   useCdn: false,
 });
 
+export async function GET() {
+  try {
+    const vinyl = await client.fetch(
+      `*[_type == "vinyl"] | order(title asc) {
+        _id, title, artist, year, genre, format, condition, price, notes, coverUrl
+      }`,
+    );
+    return NextResponse.json(vinyl);
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   const data = await req.json();
   const {
