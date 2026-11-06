@@ -1,11 +1,16 @@
 import { createClient } from "next-sanity";
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 
 // Keep these defaults aligned with the existing read routes (/api/movies and /api/vinyl)
 // so registration talks to the same Sanity project even if env vars are missing/wrong.
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "id7kivhl";
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
 const token = process.env.SANITY_WRITE_TOKEN;
+const projectIdSource = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+  ? "env"
+  : "fallback";
+const datasetSource = process.env.NEXT_PUBLIC_SANITY_DATASET ? "env" : "fallback";
 
 const writeClient = createClient({
   projectId,
@@ -105,6 +110,11 @@ function hasServerConfig() {
   return Boolean(token);
 }
 
+function tokenFingerprint(value?: string) {
+  if (!value) return "missing";
+  return createHash("sha256").update(value).digest("hex").slice(0, 10);
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (!hasServerConfig()) {
@@ -149,7 +159,8 @@ export async function POST(req: NextRequest) {
         {
           error:
             "Sanity token mismatch: SANITY_WRITE_TOKEN belongs to a different Sanity project than " +
-            `${projectId}.${dataset}. Please update token/env in Vercel and redeploy.`,
+            `${projectId}.${dataset}. Please update token/env in Vercel and redeploy. ` +
+            `Debug: tokenFingerprint=${tokenFingerprint(token)}, projectIdSource=${projectIdSource}, datasetSource=${datasetSource}.`,
         },
         { status: 500 },
       );
