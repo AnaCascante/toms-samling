@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { client } from "@/sanity/lib/client";
+import { getFallbackPhoto } from "@/lib/tom-photos";
 
 type Movie = {
   _id: string;
@@ -66,10 +67,11 @@ export default function FilmerPage() {
     return matchSearch && matchGenre && matchFormat;
   });
 
-  const getWriteClient = () => {
-    const token = process.env.NEXT_PUBLIC_SANITY_WRITE_TOKEN;
-    return client.withConfig({ token, useCdn: false });
-  };
+  const getWriteClient = () =>
+    client.withConfig({
+      token: process.env.NEXT_PUBLIC_SANITY_WRITE_TOKEN,
+      useCdn: false,
+    });
 
   const handleDelete = async (id: string) => {
     if (!confirm("Er du sikker på at du vil slette denne filmen?")) return;
@@ -77,8 +79,7 @@ export default function FilmerPage() {
       await getWriteClient().delete(id);
       setSelected(null);
       fetchMovies();
-    } catch (err) {
-      console.error("Delete error:", err);
+    } catch {
       alert("Kunne ikke slette. Prøv igjen.");
     }
   };
@@ -92,8 +93,7 @@ export default function FilmerPage() {
       setEditing(false);
       setSelected(null);
       fetchMovies();
-    } catch (err) {
-      console.error("Save error:", err);
+    } catch {
       alert("Kunne ikke lagre. Prøv igjen.");
     } finally {
       setSaving(false);
@@ -103,7 +103,7 @@ export default function FilmerPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full bg-[#d4a04a] flex items-center justify-center text-[#0d0d0d] font-bold text-lg animate-pulse">
+        <div className="w-10 h-10 rounded-full bg-[#d4a04a] flex items-center justify-center text-[#0d0d0d] font-bold animate-pulse">
           T
         </div>
       </div>
@@ -119,19 +119,18 @@ export default function FilmerPage() {
         </p>
       </div>
 
-      {/* Search & Filters */}
       <div className="flex flex-wrap gap-3 mb-8">
         <input
           type="text"
           placeholder="Søk etter tittel eller filmselskap..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#333] text-[#f0ece4] px-4 py-2.5 rounded-lg w-full sm:w-80 outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a] placeholder-[#6b6358]"
+          className="bg-[#1a1a1a] border border-[#333] text-[#f0ece4] px-4 py-2.5 rounded-lg w-full sm:w-80 outline-none focus:ring-2 focus:ring-[#d4a04a]/50 placeholder-[#6b6358]"
         />
         <select
           value={genre}
           onChange={(e) => setGenre(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#333] text-[#f0ece4] px-4 py-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#d4a04a]/50"
+          className="bg-[#1a1a1a] border border-[#333] text-[#f0ece4] px-4 py-2.5 rounded-lg outline-none"
         >
           {genres.map((g) => (
             <option key={g}>{g}</option>
@@ -140,7 +139,7 @@ export default function FilmerPage() {
         <select
           value={format}
           onChange={(e) => setFormat(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#333] text-[#f0ece4] px-4 py-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#d4a04a]/50"
+          className="bg-[#1a1a1a] border border-[#333] text-[#f0ece4] px-4 py-2.5 rounded-lg outline-none"
         >
           {formats.map((f) => (
             <option key={f}>{f}</option>
@@ -148,7 +147,6 @@ export default function FilmerPage() {
         </select>
       </div>
 
-      {/* Movie Grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-20 text-[#6b6358]">
           <div className="text-5xl mb-4">🎬</div>
@@ -166,17 +164,13 @@ export default function FilmerPage() {
               }}
               className="bg-[#1a1a1a] border border-[#333] rounded-xl overflow-hidden hover:border-[#d4a04a]/40 transition-all hover:scale-[1.02] cursor-pointer"
             >
-              {movie.coverUrl ? (
+              <div className="w-full aspect-[2/3] overflow-hidden">
                 <img
-                  src={movie.coverUrl}
+                  src={movie.coverUrl || getFallbackPhoto(movie._id)}
                   alt={movie.title}
-                  className="w-full aspect-[2/3] object-cover"
+                  className="w-full h-full object-cover"
                 />
-              ) : (
-                <div className="w-full aspect-[2/3] bg-[#111] flex items-center justify-center text-4xl">
-                  🎬
-                </div>
-              )}
+              </div>
               <div className="p-2">
                 <p className="font-semibold text-sm leading-tight text-[#f0ece4]">
                   {movie.title}
@@ -191,7 +185,6 @@ export default function FilmerPage() {
         </div>
       )}
 
-      {/* Detail / Edit Modal */}
       {selected && (
         <div
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
@@ -203,13 +196,11 @@ export default function FilmerPage() {
           >
             {!editing ? (
               <>
-                {selected.coverUrl && (
-                  <img
-                    src={selected.coverUrl}
-                    alt={selected.title}
-                    className="w-full max-h-64 object-contain rounded-xl mb-4"
-                  />
-                )}
+                <img
+                  src={selected.coverUrl || getFallbackPhoto(selected._id)}
+                  alt={selected.title}
+                  className="w-full max-h-64 object-contain rounded-xl mb-4"
+                />
                 <h2 className="text-2xl font-bold mb-4 text-[#f0ece4]">
                   {selected.title}
                 </h2>
