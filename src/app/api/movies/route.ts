@@ -9,6 +9,21 @@ const client = createClient({
   useCdn: false,
 });
 
+export async function GET() {
+  try {
+    const movies = await client.fetch(
+      `*[_type == "movie"] | order(title asc) {
+        _id, title, studio, year, genre, format, condition,
+        language, duration, coverUrl, notes, mainActors, rating
+      }`,
+    );
+    return NextResponse.json(movies);
+  } catch (err) {
+    console.error("Fetch error:", err);
+    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   const data = await req.json();
   const {
