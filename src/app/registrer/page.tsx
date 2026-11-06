@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { client } from "@/sanity/lib/client";
 
 const movieGenres = [
   "Action",
@@ -115,30 +114,6 @@ function SelectField({
   );
 }
 
-function TextField({
-  name,
-  label,
-  required,
-  type = "text",
-}: {
-  name: string;
-  label: string;
-  required?: boolean;
-  type?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-[#a89f91] mb-1 text-sm">{label}</label>
-      <input
-        type={type}
-        name={name}
-        required={required}
-        className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
-      />
-    </div>
-  );
-}
-
 function TextAreaField({ name, label }: { name: string; label: string }) {
   return (
     <div>
@@ -158,6 +133,35 @@ export default function RegistrerPage() {
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">(
     "idle",
   );
+  const [title, setTitle] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [fetchedYear, setFetchedYear] = useState("");
+  const [fetchingCover, setFetchingCover] = useState(false);
+
+  const fetchCover = async (titleValue: string) => {
+    if (!titleValue || titleValue.length < 2) return;
+    setFetchingCover(true);
+    try {
+      const res = await fetch(
+        `/api/tmdb?query=\${encodeURIComponent(titleValue)}`,
+      );
+      const data = await res.json();
+      if (data.coverUrl) {
+        setCoverUrl(data.coverUrl);
+        if (data.year) setFetchedYear(data.year);
+      } else {
+        setCoverUrl("");
+      }
+    } catch {
+      setCoverUrl("");
+    } finally {
+      setFetchingCover(false);
+    }
+  };
+
+  const handleTitleBlur = () => {
+    if (type === "movie") fetchCover(title);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -169,17 +173,26 @@ export default function RegistrerPage() {
       if (val) data[key] = val as string;
     });
 
-    try {
-      const token = process.env.NEXT_PUBLIC_SANITY_WRITE_TOKEN;
-      const writeClient = client.withConfig({ token, useCdn: false });
+    // Use auto-fetched cover if no manual one entered
+    if (!data.coverUrl && coverUrl) {
+      data.coverUrl = coverUrl;
+    }
 
-      await writeClient.create({
-        _type: type,
-        ...data,
+    try {
+      const res = await fetch("/api/sanity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _type: type, ...data }),
       });
+
+      if (!res.ok) throw new Error("Failed to save");
 
       setStatus("success");
       e.currentTarget.reset();
+      setTitle("");
+      setCoverUrl("");
+      setFetchedYear("");
+
       setTimeout(() => {
         router.push(type === "movie" ? "/filmer" : "/vinyl");
       }, 1500);
@@ -203,8 +216,13 @@ export default function RegistrerPage() {
 
       <div className="flex gap-3 mb-10">
         <button
-          onClick={() => setType("movie")}
-          className={`px-6 py-2.5 rounded-full font-semibold text-sm uppercase tracking-wider transition-all ${
+          onClick={() => {
+            setType("movie");
+            setCoverUrl("");
+            setTitle("");
+            setFetchedYear("");
+          }}
+          className={`px-6 py-2.5 rounded-full font-semibold text-sm uppercase tracking-wider transition-all \${
             type === "movie"
               ? "bg-[#d4a04a] text-[#0d0d0d]"
               : "bg-[#1a1a1a] border border-[#333] text-[#a89f91] hover:border-[#d4a04a]/40"
@@ -213,7 +231,12 @@ export default function RegistrerPage() {
           🎬 Film
         </button>
         <button
-          onClick={() => setType("vinyl")}
+          onClick={() => {
+            setType("vinyl");
+            setCoverUrl("");
+            setTitle("");
+            setFetchedYear("");
+          }}
           className={`px-6 py-2.5 rounded-full font-semibold text-sm uppercase tracking-wider transition-all ${
             type === "vinyl"
               ? "bg-[#d4a04a] text-[#0d0d0d]"
@@ -227,42 +250,208 @@ export default function RegistrerPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {type === "movie" ? (
           <>
-            <TextField name="title" label="Tittel" required />
+            {/* Title with auto-fetch */}
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Tittel *
+              </label>
+              <input
+                type="text"
+                name="title"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onBlur={handleTitleBlur}
+                placeholder="Skriv tittel og tab for å hente cover..."
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+              {fetchingCover && (
+                <p className="text-[#a89f91] text-xs mt-1">
+                  🔍 Henter cover fra TMDB...
+                </p>
+              )}
+            </div>
+
+            {/* Cover preview */}
+            {coverUrl && (
+              <div className="flex items-start gap-4 p-3 bg-[#1a1a1a] border border-[#333] rounded-lg">
+                <img
+                  src={coverUrl}
+                  alt="Cover"
+                  className="w-16 h-24 object-cover rounded"
+                />
+                <div className="flex-1">
+                  <p className="text-green-400 text-sm mb-1">
+                    ✅ Cover funnet automatisk!
+                  </p>
+                  {fetchedYear && (
+                    <p className="text-[#a89f91] text-xs">År: {fetchedYear}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setCoverUrl("")}
+                    className="text-red-400 text-xs mt-2 hover:text-red-300"
+                  >
+                    ✕ Fjern cover
+                  </button>
+                </div>
+              </div>
+            )}
+
             <SelectField
               name="studio"
               label="Filmselskap"
               options={movieStudios}
             />
-            <TextField name="year" label="År" />
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">År</label>
+              <input
+                type="text"
+                name="year"
+                value={fetchedYear}
+                onChange={(e) => setFetchedYear(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
             <SelectField name="genre" label="Sjanger" options={movieGenres} />
-            <TextField name="mainActors" label="Hovedskuespillere" />
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Hovedskuespillere
+              </label>
+              <input
+                type="text"
+                name="mainActors"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
             <SelectField name="format" label="Format" options={movieFormats} />
             <SelectField
               name="condition"
               label="Tilstand"
               options={conditions}
             />
-            <TextField name="language" label="Språk" />
-            <TextField name="duration" label="Varighet (min)" />
-            <TextField name="rating" label="Vurdering" />
-            <TextField name="price" label="Pris (kr)" />
-            <TextField name="coverUrl" label="Cover URL" />
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">Språk</label>
+              <input
+                type="text"
+                name="language"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Varighet (min)
+              </label>
+              <input
+                type="text"
+                name="duration"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Vurdering
+              </label>
+              <input
+                type="text"
+                name="rating"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Pris (kr)
+              </label>
+              <input
+                type="text"
+                name="price"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Cover URL (valgfri overstyring)
+              </label>
+              <input
+                type="text"
+                name="coverUrl"
+                value={coverUrl}
+                onChange={(e) => setCoverUrl(e.target.value)}
+                placeholder="Lim inn egen URL eller la stå tom"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
             <TextAreaField name="notes" label="Notater" />
           </>
         ) : (
           <>
-            <TextField name="title" label="Tittel" required />
-            <TextField name="artist" label="Artist" />
-            <TextField name="year" label="År" />
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Tittel *
+              </label>
+              <input
+                type="text"
+                name="title"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Artist
+              </label>
+              <input
+                type="text"
+                name="artist"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">År</label>
+              <input
+                type="text"
+                name="year"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
             <SelectField name="genre" label="Sjanger" options={vinylGenres} />
             <SelectField
               name="condition"
               label="Tilstand"
               options={conditions}
             />
-            <TextField name="label" label="Plateselskap" />
-            <TextField name="price" label="Pris (kr)" />
-            <TextField name="coverUrl" label="Cover URL" />
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Plateselskap
+              </label>
+              <input
+                type="text"
+                name="label"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Pris (kr)
+              </label>
+              <input
+                type="text"
+                name="price"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
+            <div>
+              <label className="block text-[#a89f91] mb-1 text-sm">
+                Cover URL
+              </label>
+              <input
+                type="text"
+                name="coverUrl"
+                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+              />
+            </div>
             <TextAreaField name="notes" label="Notater" />
           </>
         )}
