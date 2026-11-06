@@ -14,8 +14,17 @@ export async function POST(req: NextRequest) {
     const data = await req.json();
     const result = await writeClient.create(data);
     return NextResponse.json(result);
-  } catch (err) {
-    return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+  } catch (err: any) {
+    console.error(
+      "SANITY ERROR:",
+      err.message,
+      err.statusCode,
+      err.response?.body,
+    );
+    return NextResponse.json(
+      { error: err.message || "Failed to create" },
+      { status: 500 },
+    );
   }
 }
 
