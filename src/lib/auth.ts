@@ -1,27 +1,36 @@
 const AUTH_KEY = "toms-samling-auth";
-const CREDENTIALS = {
-  username: "Tomklatrer",
-  password: "T'estimo2016",
-};
 
 export function isLoggedIn(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return localStorage.getItem(AUTH_KEY) === "true";
+    return sessionStorage.getItem(AUTH_KEY) === "true";
   } catch {
     return false;
   }
 }
 
-export function login(username: string, password: string): boolean {
-  if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
-    localStorage.setItem(AUTH_KEY, "true");
-    return true;
+export async function login(
+  username: string,
+  password: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      sessionStorage.setItem(AUTH_KEY, "true");
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
   }
-  return false;
 }
 
 export function logout() {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(AUTH_KEY);
+  sessionStorage.removeItem(AUTH_KEY);
 }
