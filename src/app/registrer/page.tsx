@@ -49,7 +49,6 @@ const movieStudios = [
 ];
 
 const movieFormats = ["DVD", "Blu-ray", "4K UHD", "VHS", "LaserDisc", "Annet"];
-
 const conditions = [
   "Mint",
   "Nær Mint",
@@ -58,7 +57,6 @@ const conditions = [
   "Brukbar",
   "Dårlig",
 ];
-
 const vinylGenres = [
   "Rock",
   "Pop",
@@ -134,11 +132,12 @@ export default function RegistrerPage() {
     "idle",
   );
   const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [fetchedYear, setFetchedYear] = useState("");
   const [fetchingCover, setFetchingCover] = useState(false);
 
-  const fetchCover = async (titleValue: string) => {
+  const fetchMovieCover = async (titleValue: string) => {
     if (!titleValue || titleValue.length < 2) return;
     setFetchingCover(true);
     try {
@@ -159,8 +158,41 @@ export default function RegistrerPage() {
     }
   };
 
+  const fetchVinylCover = async (titleValue: string, artistValue: string) => {
+    if (!titleValue || titleValue.length < 2) return;
+    setFetchingCover(true);
+    try {
+      const params = new URLSearchParams({ title: titleValue });
+      if (artistValue) params.append("artist", artistValue);
+      const res = await fetch(`/api/musicbrainz?\${params.toString()}`);
+      const data = await res.json();
+      if (data.coverUrl) {
+        setCoverUrl(data.coverUrl);
+        if (data.year) setFetchedYear(data.year);
+      } else {
+        setCoverUrl("");
+      }
+    } catch {
+      setCoverUrl("");
+    } finally {
+      setFetchingCover(false);
+    }
+  };
+
   const handleTitleBlur = () => {
-    if (type === "movie") fetchCover(title);
+    if (type === "movie") fetchMovieCover(title);
+    if (type === "vinyl") fetchVinylCover(title, artist);
+  };
+
+  const handleArtistBlur = () => {
+    if (type === "vinyl" && title) fetchVinylCover(title, artist);
+  };
+
+  const resetForm = () => {
+    setTitle("");
+    setArtist("");
+    setCoverUrl("");
+    setFetchedYear("");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -173,7 +205,6 @@ export default function RegistrerPage() {
       if (val) data[key] = val as string;
     });
 
-    // Use auto-fetched cover if no manual one entered
     if (!data.coverUrl && coverUrl) {
       data.coverUrl = coverUrl;
     }
@@ -189,9 +220,7 @@ export default function RegistrerPage() {
 
       setStatus("success");
       e.currentTarget.reset();
-      setTitle("");
-      setCoverUrl("");
-      setFetchedYear("");
+      resetForm();
 
       setTimeout(() => {
         router.push(type === "movie" ? "/filmer" : "/vinyl");
@@ -201,6 +230,9 @@ export default function RegistrerPage() {
       setStatus("error");
     }
   };
+
+  const inputClass =
+    "w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]";
 
   return (
     <main className="py-12 px-6 max-w-2xl mx-auto">
@@ -218,9 +250,7 @@ export default function RegistrerPage() {
         <button
           onClick={() => {
             setType("movie");
-            setCoverUrl("");
-            setTitle("");
-            setFetchedYear("");
+            resetForm();
           }}
           className={`px-6 py-2.5 rounded-full font-semibold text-sm uppercase tracking-wider transition-all \${
             type === "movie"
@@ -233,9 +263,7 @@ export default function RegistrerPage() {
         <button
           onClick={() => {
             setType("vinyl");
-            setCoverUrl("");
-            setTitle("");
-            setFetchedYear("");
+            resetForm();
           }}
           className={`px-6 py-2.5 rounded-full font-semibold text-sm uppercase tracking-wider transition-all ${
             type === "vinyl"
@@ -250,7 +278,6 @@ export default function RegistrerPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {type === "movie" ? (
           <>
-            {/* Title with auto-fetch */}
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">
                 Tittel *
@@ -263,7 +290,7 @@ export default function RegistrerPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 onBlur={handleTitleBlur}
                 placeholder="Skriv tittel og tab for å hente cover..."
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+                className={inputClass}
               />
               {fetchingCover && (
                 <p className="text-[#a89f91] text-xs mt-1">
@@ -272,7 +299,6 @@ export default function RegistrerPage() {
               )}
             </div>
 
-            {/* Cover preview */}
             {coverUrl && (
               <div className="flex items-start gap-4 p-3 bg-[#1a1a1a] border border-[#333] rounded-lg">
                 <img
@@ -310,7 +336,7 @@ export default function RegistrerPage() {
                 name="year"
                 value={fetchedYear}
                 onChange={(e) => setFetchedYear(e.target.value)}
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+                className={inputClass}
               />
             </div>
             <SelectField name="genre" label="Sjanger" options={movieGenres} />
@@ -318,11 +344,7 @@ export default function RegistrerPage() {
               <label className="block text-[#a89f91] mb-1 text-sm">
                 Hovedskuespillere
               </label>
-              <input
-                type="text"
-                name="mainActors"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
-              />
+              <input type="text" name="mainActors" className={inputClass} />
             </div>
             <SelectField name="format" label="Format" options={movieFormats} />
             <SelectField
@@ -332,41 +354,25 @@ export default function RegistrerPage() {
             />
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">Språk</label>
-              <input
-                type="text"
-                name="language"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
-              />
+              <input type="text" name="language" className={inputClass} />
             </div>
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">
                 Varighet (min)
               </label>
-              <input
-                type="text"
-                name="duration"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
-              />
+              <input type="text" name="duration" className={inputClass} />
             </div>
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">
                 Vurdering
               </label>
-              <input
-                type="text"
-                name="rating"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
-              />
+              <input type="text" name="rating" className={inputClass} />
             </div>
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">
                 Pris (kr)
               </label>
-              <input
-                type="text"
-                name="price"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
-              />
+              <input type="text" name="price" className={inputClass} />
             </div>
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">
@@ -378,7 +384,7 @@ export default function RegistrerPage() {
                 value={coverUrl}
                 onChange={(e) => setCoverUrl(e.target.value)}
                 placeholder="Lim inn egen URL eller la stå tom"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+                className={inputClass}
               />
             </div>
             <TextAreaField name="notes" label="Notater" />
@@ -395,7 +401,9 @@ export default function RegistrerPage() {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+                onBlur={handleTitleBlur}
+                placeholder="Skriv tittel og tab for å hente cover..."
+                className={inputClass}
               />
             </div>
             <div>
@@ -405,15 +413,52 @@ export default function RegistrerPage() {
               <input
                 type="text"
                 name="artist"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+                value={artist}
+                onChange={(e) => setArtist(e.target.value)}
+                onBlur={handleArtistBlur}
+                placeholder="Skriv artist og tab for å hente cover..."
+                className={inputClass}
               />
+              {fetchingCover && (
+                <p className="text-[#a89f91] text-xs mt-1">
+                  🔍 Henter cover fra MusicBrainz...
+                </p>
+              )}
             </div>
+
+            {coverUrl && (
+              <div className="flex items-start gap-4 p-3 bg-[#1a1a1a] border border-[#333] rounded-lg">
+                <img
+                  src={coverUrl}
+                  alt="Cover"
+                  className="w-16 h-16 object-cover rounded"
+                />
+                <div className="flex-1">
+                  <p className="text-green-400 text-sm mb-1">
+                    ✅ Cover funnet automatisk!
+                  </p>
+                  {fetchedYear && (
+                    <p className="text-[#a89f91] text-xs">År: {fetchedYear}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setCoverUrl("")}
+                    className="text-red-400 text-xs mt-2 hover:text-red-300"
+                  >
+                    ✕ Fjern cover
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">År</label>
               <input
                 type="text"
                 name="year"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+                value={fetchedYear}
+                onChange={(e) => setFetchedYear(e.target.value)}
+                className={inputClass}
               />
             </div>
             <SelectField name="genre" label="Sjanger" options={vinylGenres} />
@@ -426,30 +471,25 @@ export default function RegistrerPage() {
               <label className="block text-[#a89f91] mb-1 text-sm">
                 Plateselskap
               </label>
-              <input
-                type="text"
-                name="label"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
-              />
+              <input type="text" name="label" className={inputClass} />
             </div>
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">
                 Pris (kr)
               </label>
-              <input
-                type="text"
-                name="price"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
-              />
+              <input type="text" name="price" className={inputClass} />
             </div>
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">
-                Cover URL
+                Cover URL (valgfri overstyring)
               </label>
               <input
                 type="text"
                 name="coverUrl"
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2.5 text-[#f0ece4] focus:outline-none focus:ring-2 focus:ring-[#d4a04a]/50 focus:border-[#d4a04a]"
+                value={coverUrl}
+                onChange={(e) => setCoverUrl(e.target.value)}
+                placeholder="Lim inn egen URL eller la stå tom"
+                className={inputClass}
               />
             </div>
             <TextAreaField name="notes" label="Notater" />
