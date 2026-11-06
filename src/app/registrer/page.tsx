@@ -142,9 +142,7 @@ export default function RegistrerPage() {
     if (!titleValue || titleValue.length < 2) return;
     setFetchingCover(true);
     try {
-      const res = await fetch(
-        `/api/tmdb?query=\${encodeURIComponent(titleValue)}`,
-      );
+      const res = await fetch(`/api/tmdb?query=${encodeURIComponent(titleValue)}`);
       const data = await res.json();
       if (data.coverUrl) {
         setCoverUrl(data.coverUrl);
@@ -165,7 +163,7 @@ export default function RegistrerPage() {
     try {
       const params = new URLSearchParams({ title: titleValue });
       if (artistValue) params.append("artist", artistValue);
-      const res = await fetch(`/api/musicbrainz?\${params.toString()}`);
+      const res = await fetch(`/api/musicbrainz?${params.toString()}`);
       const data = await res.json();
       if (data.coverUrl) {
         setCoverUrl(data.coverUrl);
@@ -198,10 +196,11 @@ export default function RegistrerPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
     setStatus("saving");
     setErrorMessage("");
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(form);
     const data: Record<string, string> = {};
     formData.forEach((val, key) => {
       if (val) data[key] = val as string;
@@ -224,7 +223,7 @@ export default function RegistrerPage() {
       }
 
       setStatus("success");
-      e.currentTarget.reset();
+      form.reset();
       resetForm();
 
       setTimeout(() => {
