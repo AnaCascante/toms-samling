@@ -33,7 +33,7 @@ export default function FilmerPage() {
 
   const fetchMovies = async () => {
     try {
-      const data = await client.fetch<Movie[]>(
+      const data = await client.withConfig({ useCdn: false }).fetch<Movie[]>(
         `*[_type == "movie"] | order(title asc) {
           _id, title, studio, year, genre, format, condition,
           language, duration, coverUrl, notes, mainActors, rating
