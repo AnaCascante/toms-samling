@@ -10,12 +10,12 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(false);
-    setTimeout(() => {
-      const success = login(username, password);
+    setTimeout(async () => {
+      const success = await login(username, password);
       if (success) {
         onLogin();
       } else {

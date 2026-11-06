@@ -162,7 +162,7 @@ export default function FilmerPage() {
               }}
               className="bg-[#1a1a1a] border border-[#333] rounded-xl overflow-hidden hover:border-[#d4a04a]/40 transition-all hover:scale-[1.02] cursor-pointer"
             >
-              <div className="w-full aspect-[2/3] overflow-hidden">
+              <div className="w-full aspect-2/3 overflow-hidden">
                 <img
                   src={movie.coverUrl || getFallbackPhoto(movie._id)}
                   alt={movie.title}

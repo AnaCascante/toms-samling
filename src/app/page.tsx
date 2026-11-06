@@ -35,7 +35,7 @@ export default async function HomePage() {
             alt="Vinyl og film samling"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0d0d0d]/70 via-[#0d0d0d]/50 to-[#0d0d0d]" />
+          <div className="absolute inset-0 bg-linear-to-b from-[#0d0d0d]/70 via-[#0d0d0d]/50 to-[#0d0d0d]" />
         </div>
         <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-[#d4a04a]/10 border border-[#d4a04a]/30 rounded-full px-4 py-1.5 mb-6">
