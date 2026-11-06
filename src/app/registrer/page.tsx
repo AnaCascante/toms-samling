@@ -252,7 +252,7 @@ export default function RegistrerPage() {
             setType("movie");
             resetForm();
           }}
-          className={`px-6 py-2.5 rounded-full font-semibold text-sm uppercase tracking-wider transition-all \${
+          className={`px-6 py-2.5 rounded-full font-semibold text-sm uppercase tracking-wider transition-all ${
             type === "movie"
               ? "bg-[#d4a04a] text-[#0d0d0d]"
               : "bg-[#1a1a1a] border border-[#333] text-[#a89f91] hover:border-[#d4a04a]/40"
