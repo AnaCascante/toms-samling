@@ -67,16 +67,15 @@ export default function FilmerPage() {
     return matchSearch && matchGenre && matchFormat;
   });
 
-  const getWriteClient = () =>
-    client.withConfig({
-      token: process.env.NEXT_PUBLIC_SANITY_WRITE_TOKEN,
-      useCdn: false,
-    });
-
   const handleDelete = async (id: string) => {
     if (!confirm("Er du sikker på at du vil slette denne filmen?")) return;
     try {
-      await getWriteClient().delete(id);
+      const res = await fetch("/api/sanity", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error("Failed to delete");
       setSelected(null);
       fetchMovies();
     } catch {
@@ -88,8 +87,12 @@ export default function FilmerPage() {
     if (!editData) return;
     setSaving(true);
     try {
-      const { _id, ...rest } = editData;
-      await getWriteClient().patch(_id).set(rest).commit();
+      const res = await fetch("/api/sanity", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editData),
+      });
+      if (!res.ok) throw new Error("Failed to save");
       setEditing(false);
       setSelected(null);
       fetchMovies();
