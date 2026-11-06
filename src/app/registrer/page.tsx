@@ -131,6 +131,7 @@ export default function RegistrerPage() {
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">(
     "idle",
   );
+  const [errorMessage, setErrorMessage] = useState("");
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
@@ -198,6 +199,7 @@ export default function RegistrerPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus("saving");
+    setErrorMessage("");
 
     const formData = new FormData(e.currentTarget);
     const data: Record<string, string> = {};
@@ -216,7 +218,10 @@ export default function RegistrerPage() {
         body: JSON.stringify({ _type: type, ...data }),
       });
 
-      if (!res.ok) throw new Error("Failed to save");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || "Failed to save");
+      }
 
       setStatus("success");
       e.currentTarget.reset();
@@ -227,6 +232,9 @@ export default function RegistrerPage() {
       }, 1500);
     } catch (err) {
       console.error("Save error:", err);
+      setErrorMessage(
+        err instanceof Error ? err.message : "Noe gikk galt. Prøv igjen.",
+      );
       setStatus("error");
     }
   };
@@ -511,7 +519,7 @@ export default function RegistrerPage() {
         )}
         {status === "error" && (
           <p className="text-red-400 text-center mt-4">
-            ❌ Noe gikk galt. Prøv igjen.
+            ❌ {errorMessage || "Noe gikk galt. Prøv igjen."}
           </p>
         )}
       </form>
