@@ -1,13 +1,15 @@
 import { createClient } from "next-sanity";
 import { NextRequest, NextResponse } from "next/server";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
+// Keep these defaults aligned with the existing read routes (/api/movies and /api/vinyl)
+// so registration talks to the same Sanity project even if env vars are missing/wrong.
+const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "id7kivhl";
+const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
 const token = process.env.SANITY_WRITE_TOKEN;
 
 const writeClient = createClient({
-  projectId: projectId || "",
-  dataset: dataset || "",
+  projectId,
+  dataset,
   apiVersion: "2024-01-01",
   token,
   useCdn: false,
@@ -100,7 +102,7 @@ function sanitizePayloadLoose(input: Record<string, unknown>) {
 }
 
 function hasServerConfig() {
-  return Boolean(projectId && dataset && token);
+  return Boolean(token);
 }
 
 export async function POST(req: NextRequest) {
@@ -130,14 +132,31 @@ export async function POST(req: NextRequest) {
     const result = await writeClient.create({ _type: type, ...data });
     return NextResponse.json(result);
   } catch (err: any) {
+    const message = err?.message || "Failed to create";
+    const isHostMismatch =
+      typeof message === "string" &&
+      message.toLowerCase().includes("session does not match project host");
+
     console.error(
       "SANITY ERROR:",
-      err.message,
+      message,
       err.statusCode,
       err.response?.body,
     );
+
+    if (isHostMismatch) {
+      return NextResponse.json(
+        {
+          error:
+            "Sanity token mismatch: SANITY_WRITE_TOKEN belongs to a different Sanity project than " +
+            `${projectId}.${dataset}. Please update token/env in Vercel and redeploy.`,
+        },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json(
-      { error: err.message || "Failed to create" },
+      { error: message },
       { status: 500 },
     );
   }
