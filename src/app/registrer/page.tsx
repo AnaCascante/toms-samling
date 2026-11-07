@@ -234,10 +234,6 @@ export default function RegistrerPage() {
       setStatus("success");
       form.reset();
       resetForm();
-
-      setTimeout(() => {
-        router.push(type === "movie" ? "/filmer" : "/vinyl");
-      }, 1500);
     } catch (err) {
       console.error("Save error:", err);
       setErrorMessage(
@@ -245,6 +241,16 @@ export default function RegistrerPage() {
       );
       setStatus("error");
     }
+  };
+
+  const handleRegisterAnother = () => {
+    setStatus("idle");
+    setErrorMessage("");
+    setDuplicateCount(0);
+  };
+
+  const handleGoToCollection = () => {
+    router.push(type === "movie" ? "/filmer" : "/vinyl");
   };
 
   const inputClass =
@@ -521,9 +527,27 @@ export default function RegistrerPage() {
         </button>
 
         {status === "success" && (
-          <p className="text-green-400 text-center mt-4">
-            ✅ Lagret! {duplicateCount > 1 ? `(Du har ${duplicateCount} av denne)` : ""} Sender deg videre...
-          </p>
+          <div className="mt-6 space-y-3">
+            <p className="text-green-400 text-center">
+              ✅ Lagret! {duplicateCount > 1 ? `(Du har ${duplicateCount} av denne)` : ""}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleRegisterAnother}
+                className="flex-1 bg-[#d4a04a] hover:bg-[#e8b85c] text-[#0d0d0d] py-3 rounded-full font-semibold text-sm uppercase tracking-wider transition-all"
+              >
+                ➕ Legg til og registrer en ny
+              </button>
+              <button
+                type="button"
+                onClick={handleGoToCollection}
+                className="flex-1 bg-[#1a1a1a] border border-[#d4a04a] hover:border-[#e8b85c] text-[#d4a04a] hover:text-[#e8b85c] py-3 rounded-full font-semibold text-sm uppercase tracking-wider transition-all"
+              >
+                Gå til samling
+              </button>
+            </div>
+          </div>
         )}
         {status === "error" && (
           <p className="text-red-400 text-center mt-4">
