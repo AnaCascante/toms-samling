@@ -157,8 +157,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Tittel er påkrevd" }, { status: 400 });
     }
 
-    const result = await writeClient.create({ _type: type, ...data });
-    return NextResponse.json(result);
+    // Query to count existing documents with the same title and type
+    const query = `count(*[_type == $type && title == $title])`;
+    const duplicateCount = await writeClient.fetch(query, {
+      type,
+      title: data.title,
+    });
+
+    const result = await writeClient.create({ 
+      _type: type, 
+      ...data,
+      duplicateIndex: duplicateCount + 1,
+    });
+
+    return NextResponse.json({ 
+      ...result, 
+      duplicateCount: duplicateCount + 1 
+    });
   } catch (err: any) {
     const message = err?.message || "Failed to create";
     const isHostMismatch =

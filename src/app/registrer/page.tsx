@@ -133,6 +133,7 @@ export default function RegistrerPage() {
     "idle",
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [duplicateCount, setDuplicateCount] = useState(0);
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
@@ -202,6 +203,7 @@ export default function RegistrerPage() {
     const form = e.currentTarget;
     setStatus("saving");
     setErrorMessage("");
+    setDuplicateCount(0);
 
     const formData = new FormData(form);
     const data: Record<string, string> = {};
@@ -224,6 +226,10 @@ export default function RegistrerPage() {
         const errData = await res.json().catch(() => null);
         throw new Error(errData?.error || "Failed to save");
       }
+
+      const result = await res.json();
+      const count = result.duplicateCount || 1;
+      setDuplicateCount(count);
 
       setStatus("success");
       form.reset();
@@ -516,7 +522,7 @@ export default function RegistrerPage() {
 
         {status === "success" && (
           <p className="text-green-400 text-center mt-4">
-            ✅ Lagret! Sender deg videre...
+            ✅ Lagret! {duplicateCount > 1 ? `(Du har ${duplicateCount} av denne)` : ""} Sender deg videre...
           </p>
         )}
         {status === "error" && (
