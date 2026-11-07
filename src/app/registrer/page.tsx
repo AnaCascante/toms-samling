@@ -522,6 +522,7 @@ export default function RegistrerPage() {
           type="submit"
           disabled={status === "saving"}
           className="w-full bg-[#d4a04a] hover:bg-[#e8b85c] disabled:opacity-50 text-[#0d0d0d] py-3.5 rounded-full font-semibold text-sm uppercase tracking-wider transition-all mt-6"
+          style={{ display: status === "success" ? "none" : "block" }}
         >
           {status === "saving" ? "Lagrer..." : "Lagre"}
         </button>
