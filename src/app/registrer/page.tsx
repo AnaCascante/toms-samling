@@ -544,7 +544,7 @@ export default function RegistrerPage() {
                 onClick={handleGoToCollection}
                 className="flex-1 bg-[#1a1a1a] border border-[#d4a04a] hover:border-[#e8b85c] text-[#d4a04a] hover:text-[#e8b85c] py-3 rounded-full font-semibold text-sm uppercase tracking-wider transition-all"
               >
-                Gå til samling
+                Legg til og gå til samling
               </button>
             </div>
           </div>
