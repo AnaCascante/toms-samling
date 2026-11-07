@@ -26,6 +26,7 @@ const movieGenres = [
 const movieStudios = [
   "Disney",
   "Pixar",
+  "Disney-Pixar",
   "Marvel",
   "DreamWorks",
   "Warner Bros.",

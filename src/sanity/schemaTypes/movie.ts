@@ -19,6 +19,7 @@ export const movie = defineType({
         list: [
           "Disney",
           "Pixar",
+          "Disney-Pixar",
           "Marvel",
           "DreamWorks",
           "Warner Bros.",
