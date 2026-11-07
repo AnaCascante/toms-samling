@@ -142,7 +142,9 @@ export default function RegistrerPage() {
     if (!titleValue || titleValue.length < 2) return;
     setFetchingCover(true);
     try {
-      const res = await fetch(`/api/tmdb?query=${encodeURIComponent(titleValue)}`);
+      const res = await fetch(
+        `/api/tmdb?query=${encodeURIComponent(titleValue)}`,
+      );
       const data = await res.json();
       if (data.coverUrl) {
         setCoverUrl(data.coverUrl);
