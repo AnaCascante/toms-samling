@@ -28,7 +28,10 @@ export default function VinylPage() {
 
   const fetchRecords = async () => {
     try {
-      const res = await fetch("/api/vinyl", { cache: "no-store" });
+      const res = await fetch(`/api/vinyl?fresh=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
       const data = await res.json();
       if (!res.ok || !Array.isArray(data)) {
         throw new Error("Failed to fetch vinyl records");

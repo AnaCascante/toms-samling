@@ -10,8 +10,14 @@ function CollectionCounts() {
     async function fetchCounts() {
       try {
         const [moviesRes, vinylRes] = await Promise.all([
-          fetch("/api/movies", { cache: "no-store" }),
-          fetch("/api/vinyl", { cache: "no-store" }),
+          fetch(`/api/movies?fresh=${Date.now()}`, {
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache" },
+          }),
+          fetch(`/api/vinyl?fresh=${Date.now()}`, {
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache" },
+          }),
         ]);
 
         if (!moviesRes.ok || !vinylRes.ok) {

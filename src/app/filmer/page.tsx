@@ -32,7 +32,10 @@ export default function FilmerPage() {
 
   const fetchMovies = async () => {
     try {
-      const res = await fetch("/api/movies", { cache: "no-store" });
+      const res = await fetch(`/api/movies?fresh=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
       const data = await res.json();
       if (!res.ok || !Array.isArray(data)) {
         throw new Error("Failed to fetch movies");
