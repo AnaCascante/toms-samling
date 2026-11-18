@@ -136,6 +136,7 @@ export default function RegistrerPage() {
   const [duplicateCount, setDuplicateCount] = useState(0);
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
+  const [language, setLanguage] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [fetchedYear, setFetchedYear] = useState("");
   const [fetchingCover, setFetchingCover] = useState(false);
@@ -194,6 +195,7 @@ export default function RegistrerPage() {
   const resetForm = () => {
     setTitle("");
     setArtist("");
+    setLanguage("");
     setCoverUrl("");
     setFetchedYear("");
   };
@@ -376,7 +378,14 @@ export default function RegistrerPage() {
             />
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">Språk</label>
-              <input type="text" name="language" className={inputClass} />
+              <input
+                type="text"
+                name="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                autoComplete="off"
+                className={inputClass}
+              />
             </div>
             <div>
               <label className="block text-[#a89f91] mb-1 text-sm">
@@ -401,11 +410,12 @@ export default function RegistrerPage() {
                 Cover URL (valgfri overstyring)
               </label>
               <input
-                type="text"
+                type="url"
                 name="coverUrl"
                 value={coverUrl}
                 onChange={(e) => setCoverUrl(e.target.value)}
                 placeholder="Lim inn egen URL eller la stå tom"
+                autoComplete="off"
                 className={inputClass}
               />
             </div>
@@ -506,11 +516,12 @@ export default function RegistrerPage() {
                 Cover URL (valgfri overstyring)
               </label>
               <input
-                type="text"
+                type="url"
                 name="coverUrl"
                 value={coverUrl}
                 onChange={(e) => setCoverUrl(e.target.value)}
                 placeholder="Lim inn egen URL eller la stå tom"
+                autoComplete="off"
                 className={inputClass}
               />
             </div>
