@@ -1,30 +1,77 @@
-import Link from "next/link";
+"use client";
 
-async function getCounts() {
-  try {
-    const [moviesRes, vinylRes] = await Promise.all([
-      fetch(
-        "https://id7kivhl.api.sanity.io/v2024-01-01/data/query/production?query=count(*[_type==%22movie%22])",
-        { cache: "no-store" },
-      ),
-      fetch(
-        "https://id7kivhl.api.sanity.io/v2024-01-01/data/query/production?query=count(*[_type==%22vinyl%22])",
-        { cache: "no-store" },
-      ),
-    ]);
-    const moviesData = await moviesRes.json();
-    const vinylData = await vinylRes.json();
-    return {
-      movieCount: moviesData.result || 0,
-      vinylCount: vinylData.result || 0,
-    };
-  } catch {
-    return { vinylCount: 0, movieCount: 0 };
-  }
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+function CollectionCounts() {
+  const [counts, setCounts] = useState({ vinylCount: 0, movieCount: 0 });
+
+  useEffect(() => {
+    async function fetchCounts() {
+      try {
+        const [moviesRes, vinylRes] = await Promise.all([
+          fetch("/api/movies", { cache: "no-store" }),
+          fetch("/api/vinyl", { cache: "no-store" }),
+        ]);
+
+        if (!moviesRes.ok || !vinylRes.ok) {
+          throw new Error("Failed to fetch collection counts");
+        }
+
+        const [movies, vinyl] = await Promise.all([
+          moviesRes.json(),
+          vinylRes.json(),
+        ]);
+
+        setCounts({
+          movieCount: Array.isArray(movies) ? movies.length : 0,
+          vinylCount: Array.isArray(vinyl) ? vinyl.length : 0,
+        });
+      } catch {
+        setCounts({ vinylCount: 0, movieCount: 0 });
+      }
+    }
+
+    fetchCounts();
+  }, []);
+
+  return (
+    <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Link
+        href="/vinyl"
+        className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-8 text-center hover:border-[#d4a04a]/40 transition-all hover:scale-[1.02] group"
+      >
+        <div className="text-4xl mb-3">🎵</div>
+        <div className="text-3xl font-bold text-[#d4a04a] mb-1">
+          {counts.vinylCount}
+        </div>
+        <div className="text-[#a89f91] text-sm uppercase tracking-wider">
+          Vinyl-plater
+        </div>
+        <div className="text-[#6b6358] text-xs mt-2 group-hover:text-[#d4a04a] transition-colors">
+          Se samlingen →
+        </div>
+      </Link>
+      <Link
+        href="/filmer"
+        className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-8 text-center hover:border-[#d4a04a]/40 transition-all hover:scale-[1.02] group"
+      >
+        <div className="text-4xl mb-3">🎬</div>
+        <div className="text-3xl font-bold text-[#d4a04a] mb-1">
+          {counts.movieCount}
+        </div>
+        <div className="text-[#a89f91] text-sm uppercase tracking-wider">
+          Filmer
+        </div>
+        <div className="text-[#6b6358] text-xs mt-2 group-hover:text-[#d4a04a] transition-colors">
+          Se samlingen →
+        </div>
+      </Link>
+    </div>
+  );
 }
 
-export default async function HomePage() {
-  const { vinylCount, movieCount } = await getCounts();
+export default function HomePage() {
 
   return (
     <div>
@@ -60,38 +107,7 @@ export default async function HomePage() {
       </section>
 
       <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link
-            href="/vinyl"
-            className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-8 text-center hover:border-[#d4a04a]/40 transition-all hover:scale-[1.02] group"
-          >
-            <div className="text-4xl mb-3">🎵</div>
-            <div className="text-3xl font-bold text-[#d4a04a] mb-1">
-              {vinylCount}
-            </div>
-            <div className="text-[#a89f91] text-sm uppercase tracking-wider">
-              Vinyl-plater
-            </div>
-            <div className="text-[#6b6358] text-xs mt-2 group-hover:text-[#d4a04a] transition-colors">
-              Se samlingen →
-            </div>
-          </Link>
-          <Link
-            href="/filmer"
-            className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-8 text-center hover:border-[#d4a04a]/40 transition-all hover:scale-[1.02] group"
-          >
-            <div className="text-4xl mb-3">🎬</div>
-            <div className="text-3xl font-bold text-[#d4a04a] mb-1">
-              {movieCount}
-            </div>
-            <div className="text-[#a89f91] text-sm uppercase tracking-wider">
-              Filmer
-            </div>
-            <div className="text-[#6b6358] text-xs mt-2 group-hover:text-[#d4a04a] transition-colors">
-              Se samlingen →
-            </div>
-          </Link>
-        </div>
+        <CollectionCounts />
       </section>
 
       <section className="py-16 px-6 bg-[#1a1a1a]/50">
