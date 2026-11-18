@@ -12,11 +12,15 @@ const client = createClient({
 export async function GET() {
   try {
     const vinyl = await client.fetch(
-      `*[_type == "vinyl"] | order(title asc) {
+      `*[_type == "vinyl"] | order(title asc)[0...2000] {
         _id, title, artist, year, genre, format, condition, price, notes, coverUrl
       }`,
     );
-    return NextResponse.json(vinyl);
+    return NextResponse.json(vinyl, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    });
   } catch {
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
   }

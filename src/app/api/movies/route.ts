@@ -12,12 +12,16 @@ const client = createClient({
 export async function GET() {
   try {
     const movies = await client.fetch(
-      `*[_type == "movie"] | order(title asc) {
+      `*[_type == "movie"] | order(title asc)[0...2000] {
         _id, title, studio, year, genre, format, condition,
         language, duration, coverUrl, notes, mainActors, rating
       }`,
     );
-    return NextResponse.json(movies);
+    return NextResponse.json(movies, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    });
   } catch (err) {
     console.error("Fetch error:", err);
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
